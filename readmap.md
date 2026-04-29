@@ -74,29 +74,6 @@ This roadmap is designed to help you solve problems like `powerset`, `permutatio
 - Rebuild tsp DP structure from memory
 - Time-box each problem and debug under pressure
 
-## Powerset Subject Checklist (for your current assignment)
-
-- Parse: `target = argv[1]`, set values from `argv[2..]`
-- Recurse with index progression only (`i -> i + 1`)
-- Track current sum and chosen elements
-- At end of set, print subset if sum equals target
-- Keep element order identical to input order
-- Print empty line for empty subset when valid
-- On `malloc` failure, exit code `1`
-
-## Minimal Backtracking Template to Memorize
-
-```text
-dfs(index, sum, chosen):
-    if index == n:
-        if sum == target: print(chosen)
-        return
-
-    dfs(index + 1, sum, chosen)                  // skip
-    chosen.push(a[index])
-    dfs(index + 1, sum + a[index], chosen)       // take
-    chosen.pop()
-```
 
 ## Daily Practice Rule
 
