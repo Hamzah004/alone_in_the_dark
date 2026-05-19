@@ -1,188 +1,114 @@
 #include "get_next_line.h"
 
-int	ft_strchr(char *stash, char c)
+char *ft_strchr(char *s, int c)
 {
-	int	i;
-
-	if (!stash)
-		return (0);
-	i = 0;
-	while (stash[i])
-	{
-		if (stash[i] == c)
-			return (1);
-		i++;
-	}
-	return (0);
+  int i = 0;
+  /* FIX: added `s[i] &&` so the loop stops at '\0' when c isn't found
+     (original walked past the end of the string). */
+  while (s[i] && s[i] != c)
+    i++;
+  if (s[i] == c)
+    return s + i;
+  return NULL;
 }
 
-int	ft_strlen(char *stash)
+/* FIX: rewrote with a forward `i < n` loop. The original `while (--n > 0)`
+   was off-by-one and never copied the last byte. */
+void *ft_memcpy(void *dest, const void *src, size_t n)
 {
-	int	i;
-
-	if (!stash)
-		return (-1);
-	i = 0;
-	while (stash[i])
-		i++;
-	return (i);
+  size_t i = 0;
+  while (i < n)
+  {
+    ((char *)dest)[i] = ((char *)src)[i];
+    i++;
+  }
+  return dest;
 }
 
-
-char	*ft_strdup(char *stash)
+size_t ft_strlen(char *s)
 {
-	char	*dup;
-	int	i;
-
-	dup = malloc(sizeof(char) * (ft_strlen(stash) + 1));
-	if (!dup)
-		return (dup);
-	i = 0;
-	while (stash[i])
-	{
-		dup[i] = stash[i];
-		i++;
-	}
-	dup[i] = '\0';
-	return (dup);
+  size_t res = 0;
+  /* FIX: guard against NULL — str_append_mem passes *s1 which is NULL
+     on the first append. */
+  if (!s)
+    return 0;
+  while (*s)
+  {
+    s++;
+    res++;
+  }
+  return res;
 }
 
-
-char	*ft_strjoin(char *stash, char *buffer)
+int str_append_mem(char **s1, char *s2, size_t size2)
 {
-	char	*result;
-	int	i;
-	int	j;
-
-	if (!stash || !buffer)
-		return (NULL);
-	result = malloc(sizeof(char) * (ft_strlen(stash) + ft_strlen(buffer) + 1));
-	if (!result)
-		return (NULL);
-	i = 0;
-	while (stash[i])
-	{
-		result[i] = stash[i];
-		i++;
-	}
-	j = 0;
-	while (buffer[j])
-	{
-		result[i] = buffer[j];
-		i++;
-		j++;
-	}
-	result[i] = '\0';
-	return (result);
+  size_t size1 = ft_strlen(*s1);
+  char *tmp = malloc(size2 + size1 + 1);
+  if (!tmp)
+    return 0;
+  /* FIX: only copy the old buffer when *s1 isn't NULL; the original
+     unconditionally ft_memcpy'd from NULL on the first call. */
+  if (*s1)
+    ft_memcpy(tmp, *s1, size1);
+  ft_memcpy(tmp + size1, s2, size2);
+  tmp[size1 + size2] = '\0';
+  free(*s1);
+  *s1 = tmp;
+  return 1;
 }
 
-char	*ft_strjoin_free(char *stash, char *buffer)
+int str_append_str(char **s1, char *s2)
 {
-	char	*result;
-
-	if (!stash)
-		stash = ft_strdup("");
-	if (!stash)
-		return (NULL);
-	result = ft_strjoin(stash, buffer);
-	free(stash);
-	return (result);
+  return str_append_mem(s1, s2, ft_strlen(s2));
 }
 
+/* FIX: removed ft_memmove — it had infinite recursion in the
+   `dest > src` branch and was never called by get_next_line anyway. */
 
-char	*read_file(int fd, char *stash, char *buffer)
+char *get_next_line(int fd)
 {
-	ssize_t	bytes_read;
+  static char b[BUFFER_SIZE + 1] = "";
+  char *ret = NULL;
+  char *tmp = ft_strchr(b, '\n');
 
-	bytes_read = 1;
-	while (bytes_read > 0 && (!stash || !ft_strchr(stash, '\n')))
-	{
-		bytes_read = read(fd, buffer, BUFFER_SIZE);
-		if (bytes_read < 0)
-			return (NULL);
-		buffer[bytes_read] = '\0';
-		stash = ft_strjoin_free(stash, buffer);
-		if (!stash)
-			return (NULL);
-	}
-	return (stash);
-}
-
-char	*get_line(char *stash)
-{
-	char	*line;
-	int	i;
-	int	j;
-
-	if (!stash || !*stash)
-		return (NULL);
-	i = 0;
-	while (stash[i] != '\n' && stash[i] != '\0')
-		i++;
-	if (stash[i] == '\n')
-		i++;
-	line = malloc(sizeof(char) * (i + 1));
-	if (!line)
-		return (NULL);
-	j = 0;
-	while (j < i)
-	{
-		line[j] = stash[j];
-		j++;
-	}
-	line[i] = '\0';
-	return (line);
-}
-
-char	*update_stash(char *stash)
-{
-	char	*new_stash;
-	int	i;
-	int	j;
-	int	len;
-
-	if (!stash)
-		return (NULL);
-	i = 0;
-	while (stash[i] != '\n' && stash[i] != '\0')
-		i++;
-	if (stash[i] == '\n')
-		i++;
-	len = ft_strlen(stash) - i;
-	new_stash = malloc(sizeof(char) * (len + 1));
-	if (!new_stash)
-		return (NULL);
-	j = 0;
-	while (j < len)
-	{
-		new_stash[j] = stash[j + i];
-		j++;
-	}
-	new_stash[len] = '\0';
-	free(stash);
-	return (new_stash);
-}
-
-char	*get_next_line(int fd)
-{
-	static char	*stash;
-	char	*buffer;
-	char	*line;
-
-	if (BUFFER_SIZE <= 0 || fd < 0)
-		return (NULL);
-
-	buffer = malloc(sizeof(char) * BUFFER_SIZE + 1);
-	if (!buffer)
-		return (NULL);
-	stash = read_file(fd, stash, buffer);
-	if (!stash)
-		{
-			free(buffer);
-			return (NULL);
-		}
-	free(buffer);
-	line = get_line(stash);
-	stash = update_stash(stash);
-	return (line);
+  while (!tmp)
+  {
+    if (!str_append_str(&ret, b))
+      return (NULL);
+    int read_ret = read(fd, b, BUFFER_SIZE);
+    /* FIX: on read error, free the accumulated `ret` before returning
+       so we don't leak. */
+    if (read_ret == -1)
+    {
+      free(ret);
+      return (NULL);
+    }
+    b[read_ret] = 0;
+    /* FIX: handle EOF (read_ret == 0). The original had no EOF branch
+       and would loop forever once read started returning 0.
+       Return the accumulated line, or NULL if nothing was read. */
+    if (read_ret == 0)
+    {
+      if (*ret == '\0')
+      {
+        free(ret);
+        return (NULL);
+      }
+      return (ret);
+    }
+    /* FIX: recompute tmp after the new read — the original computed it
+       once before the loop and never refreshed it. */
+    tmp = ft_strchr(b, '\n');
+  }
+  if (!str_append_mem(&ret, b, tmp - b + 1))
+  {
+    free(ret);
+    return (NULL);
+  }
+  /* FIX: preserve the bytes after '\n' in the static buffer for the
+     next call (the original lost them on the next read). */
+  size_t rest = ft_strlen(tmp + 1);
+  ft_memcpy(b, tmp + 1, rest);
+  b[rest] = '\0';
+  return (ret);
 }
