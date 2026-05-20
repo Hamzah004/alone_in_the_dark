@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 void	print_solve(int *subset, int len)
 {
 	int	i;
